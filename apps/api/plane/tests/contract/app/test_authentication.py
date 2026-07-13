@@ -224,6 +224,18 @@ class TestMagicSignIn:
         user.save()
         return user
 
+    @pytest.fixture(autouse=True)
+    def _clear_state(self):
+        """Reset the throttle cache between tests so the shared 10/minute auth rate
+        limit exhausted by earlier tests (e.g. TestMagicLinkGenerate) doesn't leak in
+        and cause RATE_LIMIT_EXCEEDED. Mirrors the *VerifyAttempts sibling classes."""
+        cache.clear()
+        ri = redis_instance()
+        ri.delete("magic_user@plane.so")
+        yield
+        cache.clear()
+        ri.delete("magic_user@plane.so")
+
     @pytest.mark.django_db
     def test_without_data(self, django_client, setup_user, setup_instance):
         """Test magic link sign-in with empty data"""
@@ -329,6 +341,15 @@ class TestMagicSignIn:
 @pytest.mark.contract
 class TestMagicSignUp:
     """Test magic link sign-up functionality"""
+
+    @pytest.fixture(autouse=True)
+    def _clear_state(self):
+        """Reset the throttle cache between tests so the shared 10/minute auth rate
+        limit exhausted by earlier tests doesn't leak in and cause RATE_LIMIT_EXCEEDED.
+        Mirrors the *VerifyAttempts sibling classes."""
+        cache.clear()
+        yield
+        cache.clear()
 
     @pytest.mark.django_db
     def test_without_data(self, django_client, setup_instance):

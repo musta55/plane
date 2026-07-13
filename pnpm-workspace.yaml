@@ -4,6 +4,14 @@ packages:
   - "!apps/api"
   - "!apps/proxy"
 
+# pnpm 11 runs a deps-status check before every `pnpm run <script>`. Under turbo's
+# concurrent `pnpm dev`, each package's check spawns its own `pnpm install`; on Windows
+# those parallel installs collide (EPERM rename / 0xC0000409 crash) or block on a no-TTY
+# purge prompt (ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY). Deps are already installed
+# by the top-level `pnpm install`, so skip the redundant per-run check. (This key is read
+# from pnpm-workspace.yaml in pnpm 11, not .npmrc.)
+verifyDepsBeforeRun: false
+
 catalog:
   "@atlaskit/pragmatic-drag-and-drop": "1.7.4"
   "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "1.4.0"
